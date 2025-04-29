@@ -5,17 +5,18 @@ import {
 	getAllProducts,
 	getProductsByCategory,
 	getRecommendedProducts,
-} from "../controllers/product.controllers.js";
-import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
+    searchProduct,
+} from "../controllers/product.controller.js";
+import { protectRoute } from "../middleware/admin.middleware.js"; 
 
 const router = express.Router();
+console.log("Product Route Running");
 
-router.get("/", protectRoute, adminRoute, getAllProducts);
-router.get("/featured", getFeaturedProducts);
+router.get("/", getAllProducts);
 router.get("/category/:category", getProductsByCategory);
+router.get("/search", searchProduct);
 router.get("/recommendations", getRecommendedProducts);
-router.post("/", protectRoute, adminRoute, createProduct);
-router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct);
-router.delete("/:id", protectRoute, adminRoute, deleteProduct);
+router.post("/", protectRoute, createProduct);
+router.delete("/:id", protectRoute, deleteProduct);
 
-export default router;
+export default router; 

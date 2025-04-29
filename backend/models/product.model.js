@@ -1,5 +1,18 @@
 import mongoose from "mongoose";
 
+const variantSchema = new mongoose.Schema({
+	options: {
+		type: Map, // misalnya { "Ukuran": "M", "Warna": "Hitam" }
+		of: String,
+		required: true,
+	},
+	stock: {
+		type: Number,
+		required: true,
+	},
+});
+
+
 const productSchema = new mongoose.Schema(
 	{
 		name: {
@@ -17,16 +30,13 @@ const productSchema = new mongoose.Schema(
 		},
 		image: {
 			type: String,
-			required: [true, "Image is required"],
+			// required: [true, "Image is required"],
 		},
 		category: {
 			type: String,
 			required: true,
 		},
-		isFeatured: {
-			type: Boolean,
-			default: false,
-		},
+        variants: [variantSchema],
 	},
 	{ timestamps: true }
 );
