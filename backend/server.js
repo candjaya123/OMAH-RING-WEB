@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import path from "path";
 
 import adminRoutes from "./routes/admin.route.js";
+import customerRoutes from "./routes/customer.route.js";
 import productRoutes from "./routes/product.route.js";
 
 import { connectDB } from "./lib/db.js";
@@ -19,6 +20,7 @@ app.use(express.json({ limit: "10mb" })); // allows you to parse the body of the
 app.use(cookieParser());
 
 app.use("/api/admin", adminRoutes);
+app.use("/api/customer", customerRoutes);
 app.use("/api/products", productRoutes);
 // app.use("/api/cart", cartRoutes);
 // app.use("/api/coupons", couponRoutes);

@@ -7,7 +7,7 @@ import {
 	getRecommendedProducts,
     searchProduct,
 } from "../controllers/product.controller.js";
-import { protectRoute } from "../middleware/admin.middleware.js"; 
+import { protectRoute } from "../middleware/auth.middleware.js"; 
 
 const router = express.Router();
 console.log("Product Route Running");
