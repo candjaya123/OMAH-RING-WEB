@@ -1,16 +1,14 @@
 import express from "express";
 import {
-  createOrder,
-  getOrdersByCustomer,
-  getOrderById,
-  updateOrderStatus,
+	checkoutOrder,
+	lookupOrders,
+	updateOrderStatus,
 } from "../controllers/order.controller.js";
 
 const router = express.Router();
 
-router.post("/", createOrder); // buat order
-router.get("/", getOrdersByCustomer); // cari order berdasarkan nama + hp
-router.get("/:id", getOrderById); // detail 1 order
-router.put("/:id/status", updateOrderStatus); // update status (admin)
+router.post("/checkout", checkoutOrder);
+router.post("/lookup", lookupOrders);
+router.put("/:id/status", updateOrderStatus);
 
 export default router;

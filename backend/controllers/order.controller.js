@@ -1,90 +1,118 @@
 import Order from "../models/order.model.js";
+import Cart from "../models/cart.model.js";
 import Customer from "../models/customer.model.js";
 
-export const createOrder = async (req, res) => {
-  try {
-    const { name, phoneNumber, address, items, total } = req.body;
 
-    // Cari atau buat customer
-    let customer = await Customer.findOne({ name, phoneNumber });
+export const checkoutOrder = async (req, res) => {
+	try {
+		const { cartId, customerInfo, paymentMethod, shippingAddress } = req.body;
 
-    if (!customer) {
-      customer = new Customer({
-        name,
-        phoneNumber,
-        addresses: [address],
-      });
-      await customer.save();
-    }
+		// Ambil cart dan populate produk dari setiap item
+		const cart = await Cart.findById(cartId).populate("items.productId");
 
-    // Buat order baru
-    const order = new Order({
-      customer: customer._id,
-      items,
-      total,
-      status: "menunggu pembayaran",
-    });
+		if (!cart || cart.items.length === 0) {
+			return res.status(400).json({ message: "Keranjang kosong atau tidak ditemukan" });
+		}
 
-    await order.save();
+		// Cek apakah customer sudah ada
+		let customer = await Customer.findOne({
+			name: customerInfo.name,
+			phoneNumber: customerInfo.phoneNumber,
+		});
 
-    res.status(201).json({
-      message: "Order berhasil dibuat",
-      orderId: order._id,
-    });
-  } catch (error) {
-    console.error("Error creating order:", error.message);
-    res.status(500).json({ message: "Gagal membuat order", error: error.message });
-  }
+		// Jika belum ada, buat customer baru
+		if (!customer) {
+			customer = new Customer({
+				name: customerInfo.name,
+				phoneNumber: customerInfo.phoneNumber,
+				addresses: [shippingAddress],
+			});
+			await customer.save();
+		}
+
+		// Buat list item untuk order
+		const orderItems = cart.items.map((item) => ({
+			product: item.productId._id,
+			quantity: item.quantity,
+			price: item.productId.price,
+		}));
+
+		// Hitung total
+		const totalAmount = orderItems.reduce(
+			(acc, item) => acc + item.quantity * item.price,
+			0
+		);
+
+		// Buat order
+		const order = new Order({
+			customer: customer._id,
+			items: orderItems,
+			totalAmount,
+			status: paymentMethod === "transfer" ? "menunggu_pembayaran" : "terbayar",
+			paymentMethod,
+			shippingAddress,
+		});
+
+		await order.save();
+
+		// Kosongkan keranjang
+		cart.items = [];
+		await cart.save();
+
+		res.status(201).json({ message: "Order berhasil dibuat", order });
+
+	} catch (error) {
+		console.error("Checkout error:", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
 };
 
-export const getOrdersByCustomer = async (req, res) => {
-  const { name, phoneNumber } = req.query;
-  try {
-    const customer = await Customer.findOne({ name, phoneNumber });
+export const lookupOrders = async (req, res) => { //case sensitif
+	try {
+		const { name, phoneNumber } = req.body;
 
-    if (!customer) {
-      return res.status(404).json({ message: "Customer tidak ditemukan" });
-    }
+		if (!name || !phoneNumber) {
+			return res.status(400).json({ message: "Nama dan nomor telepon wajib diisi" });
+		}
 
-    const orders = await Order.find({ customer: customer._id }).sort({ createdAt: -1 });
+		const customer = await Customer.findOne({ name, phoneNumber });
 
-    res.json(orders);
-  } catch (error) {
-    res.status(500).json({ message: "Gagal mengambil order", error: error.message });
-  }
-};
+		if (!customer) {
+			return res.status(404).json({ message: "Customer tidak ditemukan" });
+		}
 
-export const getOrderById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const order = await Order.findById(id).populate("customer").populate("items.productId");
+		const orders = await Order.find({ customer: customer._id })
+			.populate("items.product")
+			.sort({ createdAt: -1 });
 
-    if (!order) {
-      return res.status(404).json({ message: "Order tidak ditemukan" });
-    }
-
-    res.json(order);
-  } catch (error) {
-    res.status(500).json({ message: "Gagal mengambil detail order", error: error.message });
-  }
+		res.json({ customer, orders });
+	} catch (error) {
+		console.error("Lookup error:", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
 };
 
 export const updateOrderStatus = async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
+	try {
+		const { id } = req.params;
+		const { status } = req.body;
 
-  try {
-    const order = await Order.findById(id);
+		const validStatuses = ["menunggu_pembayaran", "terbayar", "dikirim", "selesai"];
+		if (!validStatuses.includes(status)) {
+			return res.status(400).json({ message: "Status tidak valid" });
+		}
 
-    if (!order) {
-      return res.status(404).json({ message: "Order tidak ditemukan" });
-    }
+		const order = await Order.findById(id);
+		if (!order) {
+			return res.status(404).json({ message: "Order tidak ditemukan" });
+		}
 
-    order.status = status;
-    await order.save();
+		order.status = status;
+		await order.save();
 
-    res.json({ message: "Status order diperbarui", order });
-  } catch (error) {
-    res.status(500).json({ message: "Gagal update status", error: error.message });
-  }
+		res.json({ message: "Status order berhasil diperbarui", order });
+	} catch (error) {
+		console.error("Update status error:", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
 };
