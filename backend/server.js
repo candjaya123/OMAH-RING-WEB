@@ -6,6 +6,8 @@ import path from "path";
 import adminRoutes from "./routes/admin.route.js";
 import customerRoutes from "./routes/customer.route.js";
 import productRoutes from "./routes/product.route.js";
+import cartRoutes from "./routes/cart.route.js";
+import orderRoutes from "./routes/order.route.js";
 
 import { connectDB } from "./lib/db.js";
 
@@ -22,7 +24,8 @@ app.use(cookieParser());
 app.use("/api/admin", adminRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/products", productRoutes);
-// app.use("/api/cart", cartRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
 // app.use("/api/coupons", couponRoutes);
 // app.use("/api/payments", paymentRoutes);
 // app.use("/api/analytics", analyticsRoutes);
