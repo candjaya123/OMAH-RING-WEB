@@ -176,3 +176,40 @@ export const refreshToken = async (req, res) => {
 		res.status(403).json({ message: "Invalid refresh token" });
 	}
 };
+
+export const getAllCustomers = async (req, res) => {
+	try {
+		const customers = await Customer.find({});
+		res.status(200).json(customers);
+	} catch (error) {
+		console.error("Error in getAllCustomers:", error.message);
+		res.status(500).json({ message: "Gagal mengambil data customer", error: error.message });
+	}
+};
+export const updateCustomer = async (req, res) => {
+	try {
+		const { id } = req.params;
+		const { name, phoneNumber, addresses, role } = req.body;
+
+		const customer = await Customer.findById(id);
+		if (!customer) {
+			return res.status(404).json({ message: "Customer tidak ditemukan" });
+		}
+
+		// Perbarui field jika ada
+		if (name) customer.name = name;
+		if (phoneNumber) customer.phoneNumber = phoneNumber;
+		if (addresses) customer.addresses = addresses; // Asumsikan addresses adalah array
+		if (role) customer.role = role;
+
+		const updatedCustomer = await customer.save();
+
+		res.status(200).json({
+			message: "Customer berhasil diperbarui",
+			customer: updatedCustomer,
+		});
+	} catch (error) {
+		console.error("Error dalam updateCustomer:", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};

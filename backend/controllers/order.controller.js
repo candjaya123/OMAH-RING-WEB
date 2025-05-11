@@ -92,6 +92,20 @@ export const lookupOrders = async (req, res) => { //case sensitif
 	}
 };
 
+export const getAllOrders = async (req, res) => {
+	try {
+		const orders = await Order.find({})
+			.populate("customer")
+			.populate("items.product")
+			.sort({ createdAt: -1 });
+
+		res.json({ orders });
+	} catch (error) {
+		console.error("Get all orders error:", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const updateOrderStatus = async (req, res) => {
 	try {
 		const { id } = req.params;

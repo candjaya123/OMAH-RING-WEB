@@ -2,16 +2,21 @@ import mongoose from "mongoose";
 
 const variantSchema = new mongoose.Schema({
 	options: {
-		type: Map, // misalnya { "Ukuran": "M", "Warna": "Hitam" }
+		type: Map, // contoh: { "Ukuran": "M", "Warna": "Hitam" }
 		of: String,
 		required: true,
+	},
+	price: {
+		type: Number,
+		required: true,
+		min: 0,
 	},
 	stock: {
 		type: Number,
 		required: true,
+		min: 0,
 	},
 });
-
 
 const productSchema = new mongoose.Schema(
 	{
@@ -26,17 +31,21 @@ const productSchema = new mongoose.Schema(
 		price: {
 			type: Number,
 			min: 0,
-			required: true,
+			// Optional: hanya digunakan jika tidak ada varian
+		},
+		stock: {
+			type: Number,
+			min: 0,
+			// Optional: hanya digunakan jika tidak ada varian
 		},
 		image: {
 			type: String,
-			// required: [true, "Image is required"],
 		},
 		category: {
 			type: String,
 			required: true,
 		},
-        variants: [variantSchema],
+		variants: [variantSchema], // Jika ini tidak kosong, gunakan harga/stock dari varian
 	},
 	{ timestamps: true }
 );

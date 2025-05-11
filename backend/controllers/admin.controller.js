@@ -116,3 +116,62 @@ export const adminGetProfile = async (req, res) => {
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
+export const getAllAdmins = async (req, res) => {
+	try {
+		const admins = await Admin.find({}, "-password"); // Jangan tampilkan password
+		res.status(200).json(admins);
+	} catch (error) {
+		console.error("Error fetching admin data:", error.message);
+		res.status(500).json({ message: "Failed to fetch admins", error: error.message });
+	}
+};
+
+export const updateAdmin = async (req, res) => {
+	try {
+		const { id } = req.params;
+		const { name, phoneNumber, performance, role } = req.body;
+
+		const admin = await Admin.findById(id);
+		if (!admin) {
+			return res.status(404).json({ message: "Admin not found" });
+		}
+
+		// Update fields if provided
+		if (name) admin.name = name;
+		if (phoneNumber) admin.phoneNumber = phoneNumber;
+		if (performance) admin.performance = performance;
+		if (role) admin.role = role;
+
+		const updatedAdmin = await admin.save();
+
+		res.status(200).json({
+			_id: updatedAdmin._id,
+			name: updatedAdmin.name,
+			phoneNumber: updatedAdmin.phoneNumber,
+			performance: updatedAdmin.performance,
+			role: updatedAdmin.role,
+		});
+	} catch (error) {
+		console.error("Error updating admin:", error.message);
+		res.status(500).json({ message: "Failed to update admin", error: error.message });
+	}
+};
+export const deleteManyAdmins = async (req, res) => {
+	try {
+		const { ids } = req.body; // Expects: { ids: ["id1", "id2", "id3"] }
+
+		if (!Array.isArray(ids) || ids.length === 0) {
+			return res.status(400).json({ message: "No admin IDs provided" });
+		}
+
+		const result = await Admin.deleteMany({ _id: { $in: ids } });
+
+		res.status(200).json({
+			message: `${result.deletedCount} admin(s) deleted successfully`,
+		});
+	} catch (error) {
+		console.error("Error deleting multiple admins:", error.message);
+		res.status(500).json({ message: "Failed to delete admins", error: error.message });
+	}
+};
+
